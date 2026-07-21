@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mecharashi — Loadout Terminal</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#151b23; --panel2:#1b232e; --raise:#212b38;
+    --line:#2a3542; --line2:#38475a;
+    --ink:#dde5ee; --dim:#8b98a8; --faint:#5f6c7c;
+    --amber:#f6a623; --amber-d:#b9791a; --cyan:#4fd0e0;
+    --ok:#5fd08a; --warn:#f0b23c; --bad:#e5615a;
+    /* tier colours mirror the source sheet */
+    --t0:#e5615a; --t05:#e58aa0; --t1:#f6a623; --t15:#e7d24f;
+    --t2:#c9b98f; --t25:#b7c08f; --t3:#8a97a6; --t4:#5fd08a;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, #1a2331 0%, transparent 60%),
+      var(--bg);
+    color:var(--ink); font-family:var(--sans); line-height:1.5;
+    -webkit-font-smoothing:antialiased; padding:0 0 64px;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+
+  /* ---- header ---- */
+  header{
+    position:relative; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#141b24, #10151c);
+    overflow:hidden;
+  }
+  header::before{
+    content:""; position:absolute; inset:0; opacity:.10; pointer-events:none;
+    background:repeating-linear-gradient(-45deg,var(--amber) 0 14px,transparent 14px 34px);
+    -webkit-mask:linear-gradient(90deg,transparent 55%,#000);
+            mask:linear-gradient(90deg,transparent 55%,#000);
+  }
+  .hd{position:relative;display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 18px;padding:26px 0 20px}
+  .brand{font-family:var(--mono);font-size:12px;letter-spacing:.34em;color:var(--amber);text-transform:uppercase}
+  h1{
+    margin:2px 0 0; font-size:clamp(26px,4.6vw,42px); font-weight:800;
+    letter-spacing:.02em; text-transform:uppercase; line-height:1;
+  }
+  h1 .slash{color:var(--faint);font-weight:600}
+  .ver{font-family:var(--mono);font-size:11px;color:var(--dim);border:1px solid var(--line2);
+       border-radius:2px;padding:3px 7px;letter-spacing:.12em}
+  .sub{width:100%;color:var(--dim);font-size:13px;margin-top:10px;max-width:70ch}
+  .sub b{color:var(--ink);font-weight:600}
+
+  /* ---- console ---- */
+  .console{
+    margin-top:22px;border:1px solid var(--line);border-radius:8px;
+    background:var(--panel);overflow:hidden;
+  }
+  .console-bar{
+    display:flex;align-items:center;gap:8px;padding:9px 14px;
+    background:var(--panel2);border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;
+  }
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--line2)}
+  .dot.live{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+  .selects{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px}
+  .field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--faint);margin:0 0 6px 2px}
+  select{
+    width:100%;appearance:none;background:var(--raise);color:var(--ink);
+    border:1px solid var(--line2);border-radius:5px;padding:11px 34px 11px 12px;
+    font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;
+    background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+    background-position:calc(100% - 17px) 18px,calc(100% - 12px) 18px;background-size:5px 5px;background-repeat:no-repeat;
+  }
+  select:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+  .overrides{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 16px 16px}
+  .overrides .field label span{color:var(--amber-d)}
+  select.small{font-size:13px;padding:9px 30px 9px 11px;background-position:calc(100% - 15px) 15px,calc(100% - 11px) 15px}
+
+  /* ---- output ---- */
+  .out{margin-top:22px;display:grid;gap:14px}
+  .placeholder{
+    border:1px dashed var(--line2);border-radius:8px;padding:44px 20px;text-align:center;color:var(--dim);
+    font-family:var(--mono);letter-spacing:.06em;font-size:13px;
+  }
+  .placeholder b{color:var(--amber);font-weight:600}
+
+  .card{border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden}
+  .card > h2{
+    margin:0;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink);
+    font-family:var(--mono);padding:12px 16px;background:var(--panel2);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:10px;
+  }
+  .card > h2 .idx{color:var(--faint);font-weight:400}
+  .card > h2 .flag{margin-left:auto}
+  .body{padding:16px}
+  .body p{margin:0 0 10px}
+  .body p:last-child{margin-bottom:0}
+  .muted{color:var(--dim);font-size:13px}
+
+  /* flags */
+  .flag{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+    padding:3px 7px;border-radius:3px;border:1px solid;white-space:nowrap}
+  .flag.verified{color:var(--ok);border-color:#2c5a3f;background:#132018}
+  .flag.inferred{color:var(--warn);border-color:#5a4a20;background:#211c10}
+  .flag.v2{color:var(--faint);border-color:var(--line2);background:#141a21}
+
+  /* tier badge */
+  .tier{font-family:var(--mono);font-weight:700;font-size:11px;padding:2px 7px;border-radius:3px;color:#10151c;letter-spacing:.04em}
+
+  /* suitability verdict */
+  .verdict{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .score{font-family:var(--mono);font-weight:800;font-size:30px;line-height:1}
+  .rating{font-size:15px;font-weight:700;letter-spacing:.02em}
+  .bars{display:flex;gap:4px;margin-top:2px}
+  .bars i{width:22px;height:7px;border-radius:1px;background:var(--line2);display:block}
+  .bars i.on{background:var(--amber)}
+
+  /* chip grid */
+  .kv{display:grid;grid-template-columns:150px 1fr;gap:8px 14px;font-size:14px}
+  .kv dt{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);padding-top:2px}
+  .kv dd{margin:0;color:var(--ink)}
+  .kv dd b{color:var(--amber)}
+
+  /* pills */
+  .pills{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 0}
+  .pill{font-family:var(--mono);font-size:12px;padding:5px 10px;border-radius:4px;border:1px solid var(--line2);background:var(--raise);color:var(--ink)}
+  .pill.top{border-color:var(--amber-d);background:#241c10;color:var(--amber)}
+  .pill.stat{border-style:dashed;color:var(--dim)}
+  .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:14px 0 5px}
+  .lbl:first-child{margin-top:0}
+
+  .note{margin-top:12px;padding:10px 12px;border-left:2px solid var(--amber-d);background:#1a1f27;
+    font-size:12.5px;color:var(--dim);border-radius:0 4px 4px 0}
+  .note b{color:var(--ink)}
+
+  footer{margin-top:28px;border-top:1px solid var(--line);padding-top:16px;color:var(--faint);font-size:12px}
+  footer .legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+  .gloss{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  .gloss summary{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);cursor:pointer;list-style:none}
+  .gloss summary::-webkit-details-marker{display:none}
+  .gloss summary::before{content:"▸ ";color:var(--faint)}
+  .gloss[open] summary::before{content:"▾ "}
+  a{color:var(--cyan)}
+
+  @media(max-width:600px){
+    .selects,.overrides{grid-template-columns:1fr}
+    .kv{grid-template-columns:1fr;gap:2px 0}
+    .kv dt{padding-top:8px}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap hd">
+    <div style="flex:1 1 auto">
+      <div class="brand">Mecharashi // Loadout Terminal</div>
+      <h1>Build <span class="slash">/</span> Generator</h1>
+    </div>
+    <span class="ver">v1.8 · +R&amp;D</span>
+    <p class="sub">Pick a pilot and a chassis to assemble a build readout. Every field is tagged
+      <b>verified</b> (read from the sheet), <b>inferred</b> (from role/type patterns), or
+      <b>v2</b> (not yet transcribed). Data distilled from the <b>Michu Wiki Mecharashi</b> sheet (MICHUZAK), CN v3.1 / patch 2.x.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="console">
+    <div class="console-bar"><span class="dot" id="statusDot"></span><span id="statusText">Awaiting selection</span></div>
+    <div class="selects">
+      <div class="field">
+        <label for="pilot">Pilot</label>
+        <select id="pilot"><option value="">— select pilot —</option></select>
+      </div>
+      <div class="field">
+        <label for="st">Chassis (ST)</label>
+        <select id="st"><option value="">— select ST —</option></select>
+      </div>
+    </div>
+    <div class="overrides">
+      <div class="field">
+        <label for="wtype">Pilot weapon type <span>· override</span></label>
+        <select id="wtype" class="small">
+          <option value="">auto (from data)</option>
+          <option>Melee</option><option>Assault</option><option>Ranged</option><option>Tactical</option>
+          <option value="Mechanist">Mechanist (support)</option>
+          <option value="Guardian">Guardian (tank)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="weight">Chassis weight <span>· override</span></label>
+        <select id="weight" class="small">
+          <option value="">auto (from data)</option>
+          <option>Light</option><option>Medium</option><option>Heavy</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <div class="out" id="out">
+    <div class="placeholder">Select a <b>pilot</b> and a <b>chassis</b> to generate the loadout readout.</div>
+  </div>
+
+  <footer>
+    <div class="legend">
+      <span class="flag verified">verified</span> read directly from the sheet
+      <span class="flag inferred">inferred</span> from role / weapon-type pattern
+      <span class="flag v2">v2</span> awaiting transcription
+    </div>
+    <div>Fan-tool built on the community <b>Michu Wiki Mecharashi</b> spreadsheet by MICHUZAK. Not affiliated with the game developer. Rankings reflect that guide's opinions, CN server, and will drift as patches land.</div>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   DATA  —  extend by adding entries; no code changes needed.
+   ============================================================ */
+
+/* tier -> colour + numeric weight for scoring */
+const TIER = {
+  "T0":{c:"--t0",v:6},"T0.5":{c:"--t05",v:5},"T1":{c:"--t1",v:4},
+  "T1.5":{c:"--t15",v:3},"T2":{c:"--t2",v:2},"T2.5":{c:"--t25",v:1.5},
+  "T3":{c:"--t3",v:1},"T4":{c:"--t4",v:0.5}
+};
+
+/* S-rank pilots (tier list v2.5, verified). weaponType filled only where confirmed. */
+const PILOTS = {
+  "Rosa J":{tier:"T0",weaponType:"Assault",verified:true,build:"rosaj"},
+  "Ada":{tier:"T0"},"Aynis":{tier:"T0"},"Rosa XD":{tier:"T0"},"Lorna":{tier:"T0",weaponType:"Mechanist"},
+  "Asuka":{tier:"T0.5"},"Matilda":{tier:"T0.5"},"Melissa":{tier:"T0.5",weaponType:"Mechanist"},
+  "Wyatt":{tier:"T1"},"Adele":{tier:"T1"},"Frida":{tier:"T1"},"Veronica":{tier:"T1"},
+  "Paloma":{tier:"T1"},"Kelly":{tier:"T1"},"Rosemary":{tier:"T1"},"Eileen":{tier:"T1"},
+  "Sapientia":{tier:"T1",weaponType:"Mechanist"},"Verna":{tier:"T1"},"Rei":{tier:"T1"},"Tiphys":{tier:"T1",weaponType:"Guardian"},
+  "Hong":{tier:"T1.5"},"William":{tier:"T1.5"},"Marcus":{tier:"T1.5"},"Shinji":{tier:"T1.5"},
+  "Sylvie":{tier:"T1.5"},"Collin":{tier:"T1.5"},"Fia":{tier:"T1.5"},"Smith":{tier:"T1.5",weaponType:"Mechanist"},
+  "Gumusiay":{tier:"T2"},"Erisa":{tier:"T2"},"Rosa":{tier:"T2"},"Natalia":{tier:"T2"},
+  "Arthur":{tier:"T2"},"Naomi":{tier:"T2"},"Seven":{tier:"T2",weaponType:"Mechanist"},"Zoey":{tier:"T2",weaponType:"Guardian"},
+  "Kaidan":{tier:"T3"},"Camilla":{tier:"T3"},"Fregata":{tier:"T3"},"Cassha":{tier:"T3"},
+  "Shawnee":{tier:"T3"},"Dana":{tier:"T3"},"Grant":{tier:"T3",weaponType:"Mechanist"},
+  "Diracca":{tier:"T3",weaponType:"Guardian"},"Yevgeny":{tier:"T3",weaponType:"Guardian"},
+  "Dean":{tier:"T4"},"Catherine":{tier:"T4"}
+};
+
+/* Weapon type (chip main attribute) read from pilot guide cards. Text-first; icon as tiebreak. */
+const WEAPON_MAP = {
+  Melee:["Catherine","Gumusiay","Hong","Kaidan","Asuka","Dean","Camilla"],
+  Assault:["Rosa","Rosa J","Marcus","Frida","Matilda","Fregata","Cassha","Erisa","William"],
+  Ranged:["Dana","Shawnee","Natalia","Kelly","Sylvie","Shinji","Paloma","Fia"],
+  Tactical:["Naomi","Eileen","Arthur"],
+  Mechanist:["Melissa","Grant","Seven","Lorna","Sapientia","Smith"],
+  Guardian:["Tiphys","Rei","Diracca","Yevgeny","Zoey"]
+};
+Object.entries(WEAPON_MAP).forEach(([wp,arr])=>arr.forEach(n=>{ if(PILOTS[n]) PILOTS[n].weaponType=wp; }));
+
+/* Chassis (ST) tier list v3.1 (verified). weight/role/modules/compat/rainbow filled where read. */
+const DPS = {sets:[],stats:[]}; // placeholder
+const GUARD = ["Radiance","Charon","DMG Taken"];
+const STS = {
+  "REV-02":{tier:"T0",modules:{sets:["S.Rabbit","Ouroboros","Malthus","Ranger"],stats:["Polearm","Crit Rate","Crit DMG"]},compat:["Asuka"]},
+  "Hasteraze":{tier:"T0"},
+  "S.Tiger":{tier:"T0",rainbow:"Assault pilots +15% DMG; Crit Rate scales with hit count up to 30%; ignores obstruction when moving (Toraoh: no leg-loss movement penalty + jetpack)."},
+  "Erinys":{tier:"T0",weight:"Medium",modules:{sets:["S.Rabbit","Rex","Dreadtalon"],stats:["Crit Rate","Crit DMG"],inferred:true},compat:["Rosa XD","Rosa","Rosa J","Mary"]},
+  "Demiurge":{tier:"T0",all:true,compat:["Hailis"],rainbow:"Per different-class teammate on field, DMG +6% (max 24%); 4+ classes → +1 Initial AP & AP Regen."},
+  "Huilong":{tier:"T0",compat:["Wataru","Maat","Camilla","Dean","Gumusiay"],rainbow:"Per 1 AP carried, DMG +3% (max 24%); a 6AP+ skill when initiating can't be Dodged and is a guaranteed crit."},
+  "Revelation":{tier:"T0",role:"Mechanist"},
+  "Benxiao":{tier:"T0.5"},
+  "Bawang":{tier:"T0.5",compat:["Lexuan","Mary"],rainbow:"DMG +12% (extra 12% on 5th & later hits); Assault stacks [DMG+5%, Crit Rate+2%] up to 3; gain 4 on deploy."},
+  "Martyr":{tier:"T0.5",compat:["Maat","Dean","Camilla"]},
+  "Euclase":{tier:"T0.5",role:"Guardian",modules:{sets:["Gillesrais"],stats:["DMG Taken","Radiance","Charon"]},compat:["Tiphys","Diracca","Ana","Arnold"]},
+  "Colossus":{tier:"T0.5",weight:"Heavy",compat:["Verna"],rainbow:"When a part is hit below 70% HP, gain a shield = 15% of that part's HP; shielding grants a nearby ally +15% DMG & Hit Rate."},
+  "Tengshe":{tier:"T1"},"Rex":{tier:"T1",modules:{sets:["S.Rabbit","Dreadtalon","Ranger","Ambusher"],stats:["Sniper Rifle","Crit DMG"]},compat:["Kelly","Bella"]},
+  "S.Rabbit":{tier:"T1",modules:{sets:["Dreadtalon","Fiercejaw","Boyer"],stats:["Flame","Crit DMG"]},compat:["Fregata","Frida"]},
+  "Nightglow":{tier:"T1",compat:["Collin","Audrey","Arthur"],rainbow:"Attacking with allies within 4 tiles: DMG +18%; after 2 attacks or a command skill, restore 1 AP."},
+  "Malthus":{tier:"T1",modules:{sets:["Mithril","S.Rabbit","Arcus","Hermes"],stats:["Rocket L.","Accuracy","Crit Rate"]},compat:["Eileen","Rosemary","Mary","Cicero"]},
+  "Dictator":{tier:"T1",compat:["Eileen","Rosemary","Cicero"]},
+  "Monarchy":{tier:"T1",compat:["Audrey"],rainbow:"During combat, if HP% ≥ target, DMG +24%; initiating combat near allies costs -1 AP (once per turn)."},
+  "Ranger":{tier:"T1",modules:{sets:["S.Rabbit","Rex","Dreadtalon","Flintstone"],stats:["Chainsaw","Crit Rate","Accuracy"]},compat:["Dean","Paloma","Gumusiay","Maat","William","Emily"]},
+  "Alicorn":{tier:"T1",compat:["Paloma","William","Emily"]},
+  "REV-00":{tier:"T1",role:"Guardian",modules:{sets:["Gillesrais"],stats:["DMG Taken","Radiance","Charon"]},compat:["Rei","Erisa","Maat","Dean","William","Emily","Cassha"]},
+  "S.Warrior":{tier:"T1",compat:["Adele","Erisa"]},
+  "Rog":{tier:"T1"},
+  "Glasya":{tier:"T1.5",modules:{sets:["Rex","Dreadtalon","XR","Flintstone"],stats:["Pile Bunker","Crit Rate"]},compat:["Hong","Fenrir"]},
+  "Prometheus":{tier:"T1.5"},
+  "Ouroboros":{tier:"T1.5",modules:{sets:["Rex","Dreadtalon","XR","SEFAS"],stats:["Blade","Crit Rate","Crit DMG"]},compat:["Ophelia"]},
+  "REV-01":{tier:"T1.5",modules:{sets:["S.Rabbit","Rex","Dreadtalon","Ranger"],stats:["Flintstone","Sniper Rifle"]},compat:["Shinji","Natalia","Dana","Winston","Fia","Mary"]},
+  "Mithrill":{tier:"T1.5",modules:{sets:["Malthus","S.Rabbit","Thanatos","Twilight","Hermes"],stats:["Rail Gun"]},compat:["Fia"]},
+  "Fenrir":{tier:"T1.5",compat:["Wyatt"]},
+  "Igniter":{tier:"T1.5",modules:{sets:["Arcus","Kong","Hermes"],stats:["Missile L.","Crit Rate"]},compat:["Arthur","Naomi"]},
+  "Pascal":{tier:"T1.5",compat:["Eileen","Fia","Shawnee","Lucia"]},
+  "Heracles":{tier:"T1.5",modules:{sets:["Rex","Dreadtalon","Ranger","Flintstone"],stats:["Polearm","Crit Rate"]},compat:["Gumusiay","Raven"]},
+  "Snowyowl":{tier:"T1.5",role:"Mechanist"},
+  "Twilight":{tier:"T2",modules:{sets:["Dreadtalon","Boyer","Kaolin"],stats:["Shotgun","Crit Rate"]},compat:["Frida","Marcus","Kaidan","Rebecca"]},
+  "XR":{tier:"T2",modules:{sets:["Kaolin","Boyer"],stats:["Machine Gun","Crit Rate"]},compat:["Rosa","Mary"]},
+  "Aglow":{tier:"T2",role:"Mechanist",modules:{sets:["Blazer","Aurora","Roadrunner"],stats:["Overhaul"]},compat:["Lorna","Melissa","Seven","Gareth","Chloe"]},
+  "Illusion":{tier:"T2.5",role:"Mechanist",rainbow:"AMT Repair +12%; single-target repair +12% more; support skills discount next AP."},
+  "Arcus":{tier:"T2.5",modules:{sets:["Twilight","Kong","Hermes"],stats:["Missile L.","Crit Rate"]},compat:["Naomi"]},
+  "Kong":{tier:"T2.5",modules:{sets:["Ranger","Kaolin","Boyer"],stats:["Heavy MG","Accuracy"]},compat:["William","Emily"]},
+  "Dragon":{tier:"T2.5",modules:{sets:["S.Rabbit","Dreadtalon","XR","Flintstone"],stats:["P.Bunker","Crit Rate"]},compat:["Camilla","Hawk"]},
+  "Fiercejaw":{tier:"T2.5",modules:{sets:["S.Rabbit","Hela","XR","Gillesrais"],stats:["DMG Taken","Radiance","Charon"]},compat:["Cassha"]},
+  "Blazer":{tier:"T2.5",role:"Mechanist",modules:{sets:["Aglow","Aurora","Roadrunner"],stats:["Overhaul"]},compat:["Melissa","Seven","Grant","Gareth","Chloe"]},
+  "Aurora":{tier:"T2.5",role:"Mechanist",modules:{sets:["Blazer","Aglow","Roadrunner"],stats:["Overhaul"]},compat:["Melissa","Seven","Grant","Gareth","Chloe"]},
+  "Doppels":{tier:"T3"},
+  "Hector":{tier:"T3",rainbow:"After a perfect dodge, DMG +2.5% per stack up to 35%."},
+  "Dreadtalon":{tier:"T3",modules:{sets:["Rex","Twilight","Ambusher"],stats:["Light Rifle","Crit Rate"]},compat:["Sylvie","Alyson"]},
+  "Blue Bird":{tier:"T3",modules:{sets:["Rex","Dreadtalon","Arash"],stats:["Sniper Rifle","Crit Rate"]},compat:["Natalia","Dana","Winston"]},
+  "Thanatos":{tier:"T3",modules:{sets:["XR","Boyer","Kaolin"],stats:["Flame","Crit Rate"]},compat:["Erisa"]},
+  "Gillesrais":{tier:"T3",role:"Guardian",modules:{sets:[],stats:["Radiance","Charon","DMG Taken"]},compat:["Yevgeny","Diracca","Ana","Arnold"]},
+  "Hela":{tier:"T4"},"Sefas":{tier:"T4"},
+  "Wolverine":{tier:"T4",modules:{sets:["Malthus","Twilight","Hermes"],stats:["Rail Gun","Accuracy"]},compat:["Shawnee","Lucia"]},
+  "Dias":{tier:"T4",role:"Guardian",modules:{sets:["Gillesrais"],stats:["Radiance","Charon","DMG Taken"]},compat:["Yevgeny","Diracca","Ana","Arnold"]}
+};
+
+/* Chassis class from the ST tier-list columns (authoritative): Light/Medium/Heavy = DPS weight; Mechanist/Guardian = role. */
+const CLASS_MAP = {
+  Light:["REV-02","Hasteraze","S.Tiger","Benxiao","S.Rabbit","Tengshe","Rex","Glasya","Prometheus","Ouroboros","Twilight","Illusion","Doppels","Hector","Dreadtalon","Hela","Sefas"],
+  Medium:["Erinys","Demiurge","Bawang","Nightglow","Malthus","Dictator","Monarchy","REV-01","Mithrill","Fenrir","Igniter","Pascal","XR","Arcus","Blue Bird","Wolverine"],
+  Heavy:["Huilong","Martyr","Ranger","Alicorn","S.Warrior","Heracles","Kong","Dragon","Fiercejaw","Thanatos"],
+  Mechanist:["Revelation","Snowyowl","Aglow","Blazer","Aurora"],
+  Guardian:["Euclase","Colossus","REV-00","Rog","Gillesrais","Dias"]
+};
+Object.entries(CLASS_MAP).forEach(([cls,arr])=>arr.forEach(n=>{
+  if(!STS[n]) return;
+  if(cls==="Mechanist"||cls==="Guardian"){ STS[n].role=cls; delete STS[n].weight; }
+  else { STS[n].weight=cls; delete STS[n].role; }
+}));
+/* kaiden.gg authoritative weights (cross-referenced) — applied WITHOUT clearing role,
+   so Guardian/Mechanist chassis carry a weight too and the chip defensive line resolves. */
+const KAIDEN_WEIGHT = { "Gillesrais":"Heavy", "Dias":"Heavy", "Aurora":"Medium", "Blazer":"Medium" };
+Object.entries(KAIDEN_WEIGHT).forEach(([n,w])=>{ if(STS[n]) STS[n].weight=w; });
+
+/* Fully-verified showcase builds (per pilot). */
+const BUILDS = {
+  rosaj:{
+    st:"Erinys",
+    weapons:["Rosa — AC2","Cassha — AC11","Rosa J — AC8 (signature)"],
+    drive:["Node Y1 : Y-6 + Y-1","Node Y2 : Y-6 + Y-6 + Y-4","Spend 5 Bionics to unlock combination chips"],
+    skills:"Priority — 1st: red set/burst skill (either shown) · 2nd: red starburst · 3rd: purple crossed-arrows OR purple radiance · 4th: red cutters.",
+    pros:"Re-attacks up to 2×/turn; Machine-Gun and Cutter link attacks up to 2 each.",
+    buildOrder:"Rainbow the chassis with 2× Erinys, 0–2 Medium Upgrade Kits, 8 Purple fodders. Every duplicate part pulled saves one Medium Kit — check the recipe before dismantling spares."
+  }
+};
+
+/* ---- Accessories (Accessory tab, CO16). Trigger→Reaction system, verified from glossary. ---- */
+const ACCESSORIES = {
+  triggers:[
+    "Actively attacking & your HP > 50%","Actively attacking & your HP < 50%",
+    "Actively attacking & your HP = 100%","Actively attacking with 3+ buffs",
+    "Actively attacking targets within 3 tiles","Before attacking, if you haven't moved this turn",
+    "Initiating combat & target HP > 50%","Initiating combat & target HP < 50%",
+    "Initiating combat & target can't retaliate","Initiating combat & you destroy a part",
+    "Initiating combat & Hit Rate > 80%","Executing a skill costing 4+ AP"
+  ],
+  reactions:[
+    "DMG +25% after combat (1 turn)","Crit Rate +25% after combat (1 turn)",
+    "Hit Rate +20% after combat (1 turn)","DMG Multiplier +0.1",
+    "Splash DMG to 1 other part = 20% of DMG dealt","Restore 10% HP after combat (1/turn)",
+    "Restore HP = 30% of skirmish DMG after combat (1/turn)","Guaranteed Dodge when retaliated against",
+    "Enemy Dodge Rate -20% after combat (1 turn)","Allies within 3 tiles launch a Link Attack",
+    "Dispel 1 debuff from self after combat","Copy 1 of your buffs to an ally within 1 tile"
+  ],
+  modifications:["ATK","HP above 50%","HP below 50%","Firepower (FP)+ · weight builds"],
+  templates:{
+    DPS:{trigger:"Actively attacking & HP > 50% (+ an HP < 50% variant for the 2nd modification)",
+         reactions:["DMG +25%","Crit Rate +25%","Hit Rate +20%","Splash DMG (multi-part targets)"]},
+    Mechanist:{trigger:"Executing a skill costing 4+ AP / after combat",
+         reactions:["Restore HP = 30% of skirmish DMG","Restore 10% HP","Copy buff to ally","Dispel debuff"]},
+    Guardian:{trigger:"When retaliated against / initiating combat",
+         reactions:["Guaranteed Dodge on retaliation","Enemy Dodge Rate -20%","Restore 10% HP"]}
+  }
+};
+/* Pilots with a bespoke accessory build shown in the tab (matched there by icon). */
+const ACC_PILOTS = {
+  "Rosa XD":["General","Mary-transfer buffs"],"Rosa J":["General (Erinys)"],
+  "Asuka":["Self-buff","Mary-transfer buffs"],"Gumusiay":["General"],"Raven":["General"],
+  "Hong":["Double-weapon"],"Camilla":["Double-weapon"],"Fenrir":["Double-weapon"],
+  "Kelly":["General"],"Shinji":["General"],"Natalia":["General"],
+  "Shawnee":["General"],"Fia":["General"],"Lucia":["General"],"Erisa":["General"]
+};
+
+/* ---- Backpacks (Backpack Guide, Rank 2, v3.2 CN). System + effect pool verified; specific icon combos pending. ---- */
+const BACKPACKS = {
+  system:[
+    "Each Rank 2 backpack = a base backpack + one Amplifier or Jammer.",
+    "Only specific listed combinations have a future rainbow version — prioritise those.",
+    "Craft the recommended quantity per type (the numbers on the chart).",
+    "You can freestyle combos from spares, but off-list ones (e.g. Powerbank + Armor Jammer) won't get a rainbow version."
+  ],
+  effects:[
+    {t:"First combat each turn → DMG +7.5%, Crit Rate +5%, Body +10%",k:"dps"},
+    {t:"Rail Gun: +5% DMG per ammo in magazine (max 30%)",k:"dps"},
+    {t:"After triggering Re-ATK → Hit Rate +10%, Crit Rate +5%",k:"dps"},
+    {t:"Stealth — +50% Crit on the next attack; gain Stealth near enemies (3-turn interval)",k:"dps"},
+    {t:"Levitating movement — pass over low obstacles",k:"util"},
+    {t:"Detection — strip Stealth from nearby enemies, then Re-ATK from the same spot",k:"util"},
+    {t:"Missile/Rocket zone — ST's adjacent 2 tiles become a valid attack area for allies' Missile & Rocket, +25% Hit Rate",k:"tactical"},
+    {t:"Defensive aura — allies hit by Tactical attacks take -25% DMG; first Missile vs a nearby ally is nullified",k:"support"},
+    {t:"Debuff — Enemy DMG Taken +10%",k:"support"}
+  ],
+  guidance:{
+    Melee:"Offensive base (first-combat DMG/Crit/Body) + a Re-ATK or Stealth backpack to feed melee re-attacks.",
+    Assault:"Offensive base (first-combat DMG/Crit/Body) + Re-ATK support; Stealth for the crit spike.",
+    Ranged:"Offensive base + Rail-Gun ammo-scaling backpack where the weapon supports it; Levitating for line-of-sight.",
+    Tactical:"Missile/Rocket zone backpack to open allied fire lanes + the offensive base; pairs with the defensive Missile aura in a Tactical team.",
+    Mechanist:"Defensive aura / debuff backpacks; Detection for enemy Stealth control.",
+    Guardian:"Defensive aura (Tactical -25% / Missile nullify) + Enemy DMG Taken +10% debuff."
+  },
+  /* Pilots visible in the combo charts (specific Amplifier/Jammer combo still icon-only). */
+  covered:["Seven","Marcus","Erisa","Gumusiay","Arthur","Tiphys","Fregata","Rosemary","Sapientia","Shawnee"]
+};
+
+/* ---- Signature Weapons (v3.2 CN). Pilot -> signature-weapon talent enhancement, paraphrased from the tab. ---- */
+const SIGWEAPONS = {
+  "Sapientia":"Buffs Gugu (robot): all parts Max HP +15%, and Gugu gains an AoE skill + passives.",
+  "Collin":"Floating Cannon multiplier +0.07 per [Appointment] ally; grants Sub Attack / Defense modes.",
+  "Veronica":"[Aiming] Mode skill multiplier +0.25 & Crit +15%; no retaliation vs [Battle Damage] targets; +1 AP after first attack.",
+  "Asuka":"No-damage attack → DMG +30% (from deploy); Sync Rate +1% per kill, 80% SR boosts Polearm/MG multipliers.",
+  "Paloma":"[Positional Advantage] limit +4; Sniper crits build stacks; +0.05 Sniper multiplier per 4 stacks.",
+  "Smith":"Repairs apply DMG Reduction; Link Attack → [Without Delay] (cooldown & AP -1 at 3 stacks); Revive grants Execution immunity.",
+  "Rosemary":"[Intelligence] stack limit +5; Rocket Launcher scales with Intelligence stacks.",
+  "Verna":"Applies [Magnetic Lock-On] when allies are attacked; Rail Gun reloads on kill; per lock-on Final DMG +2% / taken -2% (max 10).",
+  "Wyatt":"[Invigorate] +1 stack (per 8.5% HP lost); each stack Retaliation DMG +4%, DMG Taken -2%.",
+  "Rosa":"Dual-MG initiate → Hit +8%, Crit +15% (2 turns); Flurry Strike also fires from the opposite arm after retaliation.",
+  "Seven":"Pochy can also perform [Wide-Range Repair].",
+  "Catherine":"[Pursuit] → [Cleave] multiplier +0.2; returns to start position after attacking.",
+  "Camilla":"3 stacks [Magnetic Armor] on sortie; Guts triggers on arm overdamage while armored.",
+  "Natalia":"[Intel Collection] restores AP; an ST destroyed in range → Crit +5% (max 25%).",
+  "Yevgeny":"[Quick Draw] / [Add Strike] unlimited; restores HP to the shielded arm after combat.",
+  "William":"Bullets +1 per enemy in range (max 4); a destroyed arm doesn't exit [Rack] Mode.",
+  "Sylvie":"[Aiming] Mode DMG +20% (+10% vs intact parts); Small Shield → full movement after a kill.",
+  "Naomi":"[Salvo] Splash DMG +25%; [Energy Optimization] — next Missile attack AP -1 (1/turn).",
+  "Shawnee":"Rail Gun [Vigilant Shot] when enemies end turn (0.35x to all in range); consecutive Rail Gun DMG +10% (max 3).",
+  "Eileen":"Rocket Launcher triggers talent at 2+ targets hit; +25% DMG vs parts at ≥50% HP.",
+  "Shinji":"HMG Range +1; Sync Rate modifier +25%, +3% per Re-ATK; post-initiate Crit +40% (1/turn).",
+  "Arthur":"[Scorching Intent] stacks (max 15); 10+ → AP Regen +1; [Link Attack] / [Lock] multiplier +0.1.",
+  "Tiphys":"[Strategic Domain] range +2 tiles; move cost -50%, allies DMG +20%; damage cap 85% Max HP per part.",
+  "Fregata":"Gains 2 stacks [Energy Saving] on attack; shares Range / Ideal Range for Assault weapons.",
+  "Marcus":"Re-ATK / [Chaser] → move +2 tiles; Re-ATK DMG +35%.",
+  "Erisa":"Applies [Burning Terrain] after actions; [Heat Rise] stacks → restore 2 AP; on Burning Terrain Flame Bullets +1, DMG +10%.",
+  "Gumusiay":"3+ targets in Aura → +1 AP; enemies in Aura with [Intimidation]/[Crash] → DMG +15%, DMG Taken -15%.",
+  "Lorna":"Single-target repair applies Crit +10%, Hit +8% (1 turn); transfers spare AP to the target.",
+  "Hong":"[Euphoria] limit +2, +1/action; 3+ stacks upgrade Flurry Strike → [Gusty Strike] (+35% DMG).",
+  "Rosa J":"ST movement → Levitating (pass low obstacles); [Valkyrie Mode] duration +1; in Valkyrie Mode Floating Cannon Bullets +2.",
+  "Kelly":"[Improved Fire] multiplier 0.15→0.2; can enter [Aiming] before Normal Attack/Shower; unmoved attack → Crit +15%.",
+  "Diracca":"[Selfless Guard] enables [Sacrifice]; balances HP of intact parts after battle.",
+  "Dean":"[Vigor] max +5, start with 5; at 10+ Vigor recover 1 AP after attack (1/turn).",
+  "Frida":"[Instability II]→[III], each stack Enemy DMG -3%; Shotgun Flurry Strike at 3+ Instability.",
+  "Fia":"[Strong Magnetic Coil] deflection spread + multiplier +0.2; target with 5+ debuffs → [Unable to move].",
+  "Rei":"[Guard] allies DMG Taken -25%; Sync Rate >65% → DMG & Fixed Damage +25%.",
+  "Cassha":"[Guard] protects allies from Assault/Ranged/Melee; 2 MGs + retaliation → chance of [Add Strike] (0.35x).",
+  "Aynis":"Sword combos raise Part Hit Weighting; [Insight] at 3 stacks → DMG +15, DMG Taken -15.",
+  "Melissa":"Repair skills dispel an extra debuff; Regular Repair dispels a debuff each trigger."
+};
+
+/* ---- Enhancement & rolls. Weapons don't roll substats in this game; chips are the rollable layer (Rainbow Chips tab, verified). ---- */
+const ENHANCE = {
+  pipeline:[
+    "Quantity Transition — merge blue → purple → gold quality first.",
+    "CP Integration (tier upgrade) — raise chip tiers manually; don't blanket-upgrade every y-1→y-2 or blue/yellow, it depends on their quality.",
+    "Chip Reconfiguration (optional) — re-roll for sub-stats and sacrifice bad ones (e.g. Melee Hit on a non-melee pilot).",
+    "Directed Transition — build the rainbow chip (red example: L-3 → B-3 → Y-6/Y-5).",
+    "Chip Processing (optional) — overclock main stats by sacrificing spare red chips, only if you have many duplicates. Make rainbow chips first."
+  ],
+  sectors:[
+    "Build pilots 16-7 or 7-16 across the two sectors.",
+    "7-CP sector: 5-1-1 beats 6-1-0 — sub-stats from both y-1 chips give more flat stats.",
+    "16-CP sector: always 6 red + the remaining 10 CP free (6-4 / 5-5 / 4-6)."
+  ],
+  weaponTuning:[
+    "Weapons themselves have fixed stats (Range / Hit / Attack Power) — there are no rollable weapon sub-stats.",
+    "\"Reroll for perfect stats\" refers to Weapon Modification + Accessory Tuning, not the weapon's own stats.",
+    "Reroll the tuning to land your pilot's recommended trigger + reaction accessories (see the Accessories card).",
+    "Build all 4 Weapon Modifications for endgame: ATK / HP above 50% / HP below 50% / Firepower+."
+  ]
+};
+
+/* ---- R&D (unlocks Ch.10). Two branches: Arms Research (weapon nodes) + Pilot Training (per-class trees). Community-sourced. ---- */
+const RND = {
+  classOf:{Melee:"Fighter",Assault:"Raider",Ranged:"Sniper",Tactical:"Tactician",Mechanist:"Mechanist",Guardian:"Guardian"},
+  focus:{
+    Fighter:"damage / crit Features",Raider:"damage / crit Features",
+    Sniper:"damage / crit Features",Tactician:"damage / crit + AoE Features",
+    Mechanist:"AP-regen / repair-boost Features",Guardian:"armor / HP / damage-reduction Features"
+  },
+  priority:[
+    "Rush the coloured Feature nodes (Function Activation) in the class trees you actually run — those are equippable buffs (3 slots per pilot). The plain \"target\" nodes are just flat stats; fill them in later.",
+    "Match Features to role: DPS classes take damage/crit, Guardians take armour/HP/damage-reduction, Mechanists take AP-regen/repair.",
+    "In Arms Research, unlock the Common Weapon nodes for the weapon types your team uses (uses Weapon Essences from Lv70 boss drops).",
+    "Don't spread thin — prioritise the class trees of your main team over completing everything."
+  ],
+  farming:"Unlocks Chapter 10. Node materials come from Elite Battles (Ch.9 & Ch.12 \"Cognitive Paradox\"), CO11, and Frontier Trial (\"Dawn Hour\"); Weapon Essences from Armed Conquest / Lv70 boss drops."
+};
+
+/* ============================================================
+   ENGINE
+   ============================================================ */
+const $=id=>document.getElementById(id);
+const cv=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+function tierBadge(t){
+  if(!t) return "";
+  return `<span class="tier" style="background:${cv(TIER[t].c)}">${t}</span>`;
+}
+function flag(kind){
+  const label={verified:"verified",inferred:"inferred",v2:"v2 · not yet in dataset"}[kind];
+  return `<span class="flag ${kind}">${label}</span>`;
+}
+
+/* populate selects, tier-ordered */
+function fill(sel,obj){
+  const el=$(sel);
+  Object.keys(obj).sort((a,b)=>{
+    const d=(TIER[obj[b].tier]?.v||0)-(TIER[obj[a].tier]?.v||0);
+    return d!==0?d:a.localeCompare(b);
+  }).forEach(k=>{
+    const o=document.createElement("option");
+    const cls = obj[k].role || obj[k].weight || obj[k].weaponType;
+    o.value=k; o.textContent=`${k}  ·  ${obj[k].tier}${cls?"  ·  "+cls:""}`;
+    el.appendChild(o);
+  });
+}
+fill("pilot",PILOTS); fill("st",STS);
+
+/* ---- section builders ---- */
+function suitability(pName,sName){
+  const p=PILOTS[pName], s=STS[sName];
+  let rating,score,on,why;
+  const listed = s.compat && s.compat.includes(pName);
+  if(s.all){ rating="Universal fit"; score="A"; on=5;
+    why=`<b>${esc(sName)}</b> accepts all pilots (excluding Rocket types), so ${esc(pName)} slots in cleanly. Its listed standout is ${esc((s.compat||["Hailis"])[0])}.`;
+  } else if(listed){ rating="Recommended pairing"; score="S"; on=5;
+    why=`${esc(pName)} is on ${esc(sName)}'s recommended-pilot list — an intended pairing. Other good fits: ${esc(s.compat.filter(x=>x!==pName).join(", ")||"—")}.`;
+  } else {
+    const pv=TIER[p.tier].v, sv=TIER[s.tier].v, sum=pv+sv;
+    if(sum>=9){rating="Strong off-list combo";score="A";on=4;}
+    else if(sum>=6){rating="Workable";score="B";on=3;}
+    else {rating="Situational";score="C";on=2;}
+    why=`No explicit pairing for ${esc(pName)} on ${esc(sName)} in the compatibility sheet. Judged on tiers — pilot ${p.tier}, chassis ${s.tier}. ${s.compat?`Sheet's picks for this chassis: ${esc(s.compat.join(", "))}.`:"No pilots listed for this chassis yet."} Confirm the weapon-type match before committing mats.`;
+  }
+  return card("01","Suitability", s.compat||s.all?"verified":"inferred", `
+    <div class="verdict">
+      <div class="score" style="color:${on>=5?cv('--ok'):on>=4?cv('--amber'):on>=3?cv('--warn'):cv('--bad')}">${score}</div>
+      <div>
+        <div class="rating">${rating}</div>
+        <div class="bars">${[1,2,3,4,5].map(i=>`<i class="${i<=on?'on':''}"></i>`).join("")}</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        ${tierBadge(p.tier)} <span class="muted">${esc(pName)}</span>
+        <span class="muted">→</span>
+        ${tierBadge(s.tier)} <span class="muted">${esc(sName)}</span>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:12px">${why}</p>`);
+}
+
+function chips(pName,sName){
+  const p=PILOTS[pName], s=STS[sName];
+  const wt = $("wtype").value || p.weaponType || "";
+  const wg = $("weight").value || s.weight || "";
+  const chassisRole = s.role || ""; // Mechanist / Guardian chassis
+  const chassisClass = chassisRole ? (chassisRole + (s.weight ? " · "+s.weight : "")) : (wg ? wg : "unknown");
+  const supportChassis = chassisRole==="Mechanist"||chassisRole==="Guardian";
+  const supportPilot = wt==="Mechanist"||wt==="Guardian";
+
+  let mainAttr = wt ? `<b>${esc(wt)}</b>` : `<b>match pilot's weapon type</b> <span class="muted">(set the override above)</span>`;
+
+  let def;
+  if(supportChassis){
+    def = chassisRole==="Guardian"
+      ? `<b>Crit RES+ / Crit DMG RES+</b> <span class="muted">(tank chassis — survivability)</span>`
+      : `<b>Dodge+</b> or survivability line <span class="muted">(support chassis)</span>`;
+  } else if(wg==="Heavy") def=`<b>Crit RES+</b> / Crit DMG RES+ <span class="muted">(Heavy line)</span>`;
+  else if(wg==="Light"||wg==="Medium") def=`<b>Dodge+</b> <span class="muted">(${wg} line)</span>`;
+  else def=`<b>Dodge+</b> if Light/Medium · <b>Crit RES+</b> if Heavy <span class="muted">(chassis weight unknown)</span>`;
+
+  let off;
+  if(supportPilot||supportChassis) off=`Support / tank build — prioritise the utility or survivability line over a Crit line.`;
+  else if(wt) off=`<b>${esc(wt)} grants ${esc(wt)} Crit+</b> <span class="muted">(take Crit over Hits on DPS)</span>`;
+  else off=`<b>[type] grants [type] Crit+</b> matching the pilot — Melee / Assault / Ranged / Tactical.`;
+
+  const drive = p.build && BUILDS[p.build] ? `
+    <div class="lbl">Neural Drive — verified for ${esc(pName)}</div>
+    <div class="pills">${BUILDS[p.build].drive.map(d=>`<span class="pill">${esc(d)}</span>`).join("")}</div>` : "";
+
+  const kind = (wt || wg || chassisRole) ? "verified" : "inferred";
+  return card("02","Chips", kind, `
+    <div class="lbl">Rainbow chips — rule engine</div>
+    <dl class="kv">
+      <dt>Chassis class</dt><dd><b>${esc(chassisClass)}</b></dd>
+      <dt>Main attribute</dt><dd>${mainAttr}</dd>
+      <dt>Defensive line</dt><dd>${def}</dd>
+      <dt>Hit / Crit line</dt><dd>${off}</dd>
+    </dl>
+    ${drive}
+    <div class="note"><b>Build order:</b> merge quality first — blue → purple → gold — then keep only chips that roll the two effects above. Quantity before perfect rolls.</div>`);
+}
+
+function modules(sName){
+  const s=STS[sName];
+  let inner, kind;
+  if(s.modules){
+    kind = s.modules.inferred ? "inferred" : "verified";
+    const sets=s.modules.sets||[], stats=s.modules.stats||[];
+    const setPills = sets.length
+      ? sets.map((m,i)=>`<span class="pill ${i===0?'top':''}">${esc(m)}${i===0?' · top pick':''}</span>`).join("")
+      : `<span class="muted">— no set modules (pure stat build) —</span>`;
+    inner=`
+      <div class="lbl">Set modules — top pick → candidates</div>
+      <div class="pills">${setPills}</div>
+      <div class="lbl">Stat rolls</div>
+      <div class="pills">${stats.map(m=>`<span class="pill stat">${esc(m)}</span>`).join("")}</div>
+      ${sets.includes("S.Rabbit")?`<div class="note">S.Rabbit is the universal T0 DPS module — slot it first.</div>`:""}`;
+  } else {
+    kind="inferred";
+    const role=s.role||"DPS";
+    const def = role==="Guardian"
+      ? {sets:["Gillesrais"],stats:["Radiance","Charon","DMG Taken"]}
+      : role==="Mechanist"
+      ? {sets:["Blazer","Aurora","Roadrunner"],stats:["Overhaul"]}
+      : {sets:["S.Rabbit","Rex","Dreadtalon"],stats:["Crit Rate","Crit DMG"]};
+    inner=`
+      <p class="muted">No module set listed for ${esc(sName)} yet — showing the ${esc(role)} default package.</p>
+      <div class="lbl">Set modules (default)</div>
+      <div class="pills">${def.sets.map((m,i)=>`<span class="pill ${i===0?'top':''}">${esc(m)}${i===0?' · top pick':''}</span>`).join("")}</div>
+      <div class="lbl">Stat rolls</div>
+      <div class="pills">${def.stats.map(m=>`<span class="pill stat">${esc(m)}</span>`).join("")}</div>`;
+  }
+  const rainbow = s.rainbow ? `<div class="note"><b>Rainbow module effect:</b> ${esc(s.rainbow)}</div>` : "";
+  return card("03","Modules", kind, inner+rainbow);
+}
+
+function weapons(pName){
+  const p=PILOTS[pName];
+  const sig = SIGWEAPONS[pName];
+  const b = p.build && BUILDS[p.build] ? BUILDS[p.build] : null;
+
+  const sigBlock = sig ? `
+    <div class="lbl">Signature weapon — endgame target</div>
+    <p><b style="color:var(--amber)">${esc(pName)}'s signature:</b> ${esc(sig)}</p>` : "";
+
+  const loadoutBlock = b ? `
+    <div class="lbl">Recommended loadout</div>
+    <div class="pills">${b.weapons.map((w,i)=>`<span class="pill ${i===b.weapons.length-1?'top':''}">${esc(w)}</span>`).join("")}</div>
+    <div class="note"><b>Skills:</b> ${esc(b.skills)}<br><b>Kit:</b> ${esc(b.pros)}</div>` : "";
+
+  const progNote = `<div class="note">The ranked EX → specialised weapon progression isn't transcribed yet — run the pilot's own EX weapon early, then build toward the signature weapon above as the endgame goal.</div>`;
+
+  if(sig || b){
+    return card("04","Weapons","verified", sigBlock + loadoutBlock + (sig?progNote:"") );
+  }
+  return card("04","Weapons","v2",
+    `<p class="muted">No signature-weapon entry for ${esc(pName)} in the tab yet. General rule: run the pilot's own EX weapon early, then move to their specialised/signature weapon as you unlock it.</p>`);
+}
+
+function accessories(pName){
+  const p=PILOTS[pName];
+  const wt=$("wtype").value||p.weaponType||"";
+  const role = wt==="Mechanist"?"Mechanist":wt==="Guardian"?"Guardian":"DPS";
+  const tpl=ACCESSORIES.templates[role];
+  const bespoke=ACC_PILOTS[pName];
+
+  const rec=`
+    <div class="lbl">Recommended template — ${esc(role)}</div>
+    <dl class="kv">
+      <dt>Trigger</dt><dd>${esc(tpl.trigger)}</dd>
+      <dt>Reactions (priority)</dt><dd>${tpl.reactions.map((r,i)=>`<b>${i+1}.</b> ${esc(r)}`).join("&nbsp; &nbsp;")}</dd>
+    </dl>
+    <div class="lbl">4 Weapon Modifications to build (endgame)</div>
+    <div class="pills">${ACCESSORIES.modifications.map(m=>`<span class="pill stat">${esc(m)}</span>`).join("")}</div>`;
+
+  const pilotLine = bespoke
+    ? `<div class="note"><b>${esc(pName)}</b> has bespoke accessory build(s) in the tab: ${bespoke.map(esc).join(", ")}. Match the trigger/reaction icons there against the glossary below.</div>`
+    : `<div class="note">No pilot-specific accessory build listed for ${esc(pName)} — use the ${esc(role)} template above.</div>`;
+
+  const gloss=`
+    <details class="gloss">
+      <summary>Accessory glossary — triggers &amp; reactions</summary>
+      <div class="lbl">Triggers (the condition)</div>
+      <div class="pills">${ACCESSORIES.triggers.map(t=>`<span class="pill">${esc(t)}</span>`).join("")}</div>
+      <div class="lbl">Reactions (the effect)</div>
+      <div class="pills">${ACCESSORIES.reactions.map(r=>`<span class="pill">${esc(r)}</span>`).join("")}</div>
+    </details>`;
+
+  const how=`<p class="muted" style="margin-top:12px">Each weapon build pairs 1–2 <b>trigger</b> accessories (if two are listed, run both or pick one) with <b>reaction</b> accessories in priority order. The <b>modification</b> column (ATK / HP thresholds) only appears on the Universal build; weight-specific builds add Firepower+.</p>`;
+
+  return card("07","Accessories","verified", rec+pilotLine+gloss+how);
+}
+
+function backpacks(pName){
+  const p=PILOTS[pName];
+  const wt=$("wtype").value||p.weaponType||"";
+  const g = BACKPACKS.guidance[wt] || "Run the offensive base backpack (first-combat DMG/Crit/Body); set the weapon-type override for a tailored pick.";
+  const covered = BACKPACKS.covered.includes(pName);
+
+  const pool=BACKPACKS.effects.map(e=>`<span class="pill ${e.k==='dps'?'top':'stat'}">${esc(e.t)}</span>`).join("");
+  const sys=BACKPACKS.system.map(s=>`<li>${esc(s)}</li>`).join("");
+
+  const pilotNote = covered
+    ? `<div class="note"><b>${esc(pName)}</b> has a documented combo in the backpack chart — the exact Amplifier/Jammer pairing is shown there by icon (not yet transcribed here).</div>`
+    : "";
+
+  return card("08","Backpacks","inferred", `
+    <div class="lbl">Pick for this pilot — ${esc(wt||'set weapon type')}</div>
+    <p class="muted">${esc(g)}</p>
+    ${pilotNote}
+    <div class="lbl">Effect pool (available backpack effects)</div>
+    <div class="pills">${pool}</div>
+    <details class="gloss">
+      <summary>How the backpack system works</summary>
+      <ul class="muted" style="margin:8px 0 0;padding-left:18px;line-height:1.6">${sys}</ul>
+    </details>
+    <div class="note">Specific per-pilot Amplifier + Jammer combos live in the chart as icons — I couldn't transcribe those cleanly this pass, so this card gives the system, the effect pool, and a role-based pick rather than the exact combo.</div>`);
+}
+
+function enhancement(pName){
+  const p=PILOTS[pName];
+  const wt=$("wtype").value||p.weaponType||"";
+  const offType = {Melee:"Ranged/Assault/Tactical",Assault:"Melee/Tactical",Ranged:"Melee/Tactical",Tactical:"Melee/Ranged"}[wt];
+  const targeting = wt && offType
+    ? `For ${esc(pName)} (<b>${esc(wt)}</b>): keep ${esc(wt)} Crit / Crit DMG / flat DMG sub-stats; sacrifice off-type ones like ${esc(offType)} Hit.`
+    : `Keep sub-stats matching the pilot's weapon type (Crit / Crit DMG); sacrifice off-type Hit rolls. Set the weapon-type override for a tailored call.`;
+
+  const pipe=ENHANCE.pipeline.map((s,i)=>`<li><b>${i+1}.</b> ${esc(s)}</li>`).join("");
+  const sect=ENHANCE.sectors.map(s=>`<li>${esc(s)}</li>`).join("");
+  const tune=ENHANCE.weaponTuning.map(s=>`<li>${esc(s)}</li>`).join("");
+
+  return card("05","Enhancement &amp; Rolls","verified", `
+    <p class="muted">Weapons don't roll sub-stats in this game — the rollable layer is <b>chips</b>. This is the chip enhancement pipeline.</p>
+    <div class="lbl">Sub-stat targeting</div>
+    <p>${targeting}</p>
+    <div class="lbl">Enhancement pipeline (order)</div>
+    <ol class="muted" style="margin:6px 0 0;padding-left:20px;line-height:1.6">${pipe}</ol>
+    <div class="lbl">Weapon tuning — "reroll for perfect stats"</div>
+    <ul class="muted" style="margin:6px 0 0;padding-left:18px;line-height:1.6">${tune}</ul>
+    <details class="gloss">
+      <summary>Sector CP builds (optimal)</summary>
+      <ul class="muted" style="margin:8px 0 0;padding-left:18px;line-height:1.6">${sect}</ul>
+    </details>`);
+}
+
+function rnd(pName){
+  const p=PILOTS[pName];
+  const wt=$("wtype").value||p.weaponType||"";
+  const cls=RND.classOf[wt]||"";
+  const focus=cls?RND.focus[cls]:"";
+
+  const pick = cls
+    ? `Priority tree for ${esc(pName)}: <b>${esc(cls)}</b> — take its <b>${esc(focus)}</b>. In Arms Research, unlock the Common Weapon nodes for ${esc(wt)} weapons.`
+    : `Set the weapon-type override to get a class-specific R&D priority. In general, rush the class trees your main team uses.`;
+
+  const rules=RND.priority.map(s=>`<li>${esc(s)}</li>`).join("");
+  return card("06","R&amp;D","verified", `
+    <div class="lbl">Priority for this pilot</div>
+    <p>${pick}</p>
+    <div class="lbl">R&amp;D priority rules</div>
+    <ul class="muted" style="margin:6px 0 0;padding-left:18px;line-height:1.6">${rules}</ul>
+    <details class="gloss">
+      <summary>What R&amp;D is &amp; where to farm it</summary>
+      <p class="muted" style="margin:8px 0 0">Two branches — <b>Arms Research</b> (Common Weapon nodes) and <b>Pilot Training</b> (per-class skill trees whose coloured nodes unlock equippable Features). ${esc(RND.farming)}</p>
+    </details>`);
+}
+
+function stub(idx,title,text){
+  return card(idx,title,"v2",`<p class="muted">${text}</p>`);
+}
+
+function card(idx,title,kind,inner){
+  return `<div class="card">
+    <h2><span class="idx">${idx}</span>${title}<span class="flag ${kind}">${{verified:"verified",inferred:"inferred",v2:"v2 · not yet in dataset"}[kind]}</span></h2>
+    <div class="body">${inner}</div>
+  </div>`;
+}
+
+function render(){
+  const pName=$("pilot").value, sName=$("st").value;
+  const out=$("out"), dot=$("statusDot"), st=$("statusText");
+  if(!pName||!sName){
+    out.innerHTML=`<div class="placeholder">Select a <b>pilot</b> and a <b>chassis</b> to generate the loadout readout.</div>`;
+    dot.classList.remove("live"); st.textContent="Awaiting selection"; return;
+  }
+  dot.classList.add("live");
+  st.textContent=`${pName} → ${sName}`.toUpperCase();
+  const bo = PILOTS[pName].build ? `<div class="card"><h2><span class="idx">09</span>Chassis build order<span class="flag verified">verified</span></h2><div class="body"><p class="muted">${esc(BUILDS[PILOTS[pName].build].buildOrder)}</p></div></div>` : "";
+  out.innerHTML =
+    suitability(pName,sName) +
+    chips(pName,sName) +
+    modules(sName) +
+    weapons(pName) +
+    enhancement(pName) +
+    rnd(pName) +
+    accessories(pName) +
+    backpacks(pName) +
+    bo;
+}
+
+["pilot","st","wtype","weight"].forEach(id=>$(id).addEventListener("change",render));
+</script>
+</body>
+</html>

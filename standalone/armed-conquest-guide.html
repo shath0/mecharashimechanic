@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mecharashi — Armed Conquest Field Manual</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#151b23; --panel2:#1b232e; --raise:#212b38;
+    --line:#2a3542; --line2:#38475a;
+    --ink:#dde5ee; --dim:#8b98a8; --faint:#5f6c7c;
+    --amber:#f6a623; --amber-d:#b9791a; --cyan:#4fd0e0;
+    --ok:#5fd08a; --warn:#f0b23c; --bad:#e5615a;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, #1a2331 0%, transparent 60%),var(--bg);
+    color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;padding:0 0 72px}
+  .wrap{max-width:940px;margin:0 auto;padding:0 18px}
+
+  header{position:relative;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#141b24,#10151c);overflow:hidden}
+  header::before{content:"";position:absolute;inset:0;opacity:.10;pointer-events:none;
+    background:repeating-linear-gradient(-45deg,var(--bad) 0 14px,transparent 14px 34px);
+    -webkit-mask:linear-gradient(90deg,transparent 55%,#000);mask:linear-gradient(90deg,transparent 55%,#000)}
+  .hd{position:relative;padding:26px 0 20px}
+  .brand{font-family:var(--mono);font-size:12px;letter-spacing:.34em;color:var(--bad);text-transform:uppercase}
+  h1{margin:2px 0 0;font-size:clamp(24px,4.4vw,40px);font-weight:800;letter-spacing:.02em;text-transform:uppercase;line-height:1}
+  h1 .s{color:var(--faint);font-weight:600}
+  .sub{color:var(--dim);font-size:13px;margin-top:10px;max-width:74ch}
+
+  .panel{margin-top:20px;border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden}
+  .panel > h2{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+    padding:11px 15px;background:var(--panel2);border-bottom:1px solid var(--line);color:var(--ink)}
+  .panel .body{padding:15px}
+  .rules{list-style:none;margin:0;padding:0}
+  .rules li{position:relative;padding:6px 0 6px 20px;font-size:13.5px;color:var(--ink);border-bottom:1px solid var(--line)}
+  .rules li:last-child{border-bottom:0}
+  .rules li::before{content:"▹";position:absolute;left:2px;color:var(--amber)}
+  .rules b{color:var(--amber)}
+  .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:14px 0 6px}
+  .lbl:first-child{margin-top:0}
+  .req-note{font-size:12.5px;color:var(--dim);margin:0 0 4px}
+  .req-note b{color:var(--ink)}
+
+  .nav{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 8px}
+  .nav button{font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:8px 12px;border-radius:5px;
+    border:1px solid var(--line2);background:var(--raise);color:var(--dim);cursor:pointer;text-transform:uppercase}
+  .nav button.active{border-color:var(--amber-d);background:#241c10;color:var(--amber)}
+  .nav button:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+
+  .sechead{margin:20px 0 4px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .sechead h3{margin:0;font-size:20px;font-weight:800;letter-spacing:.01em}
+  .sechead .idx{font-family:var(--mono);color:var(--faint);font-size:13px}
+  .meta{font-size:12.5px;color:var(--dim);margin:2px 0 14px}
+  .meta b{color:var(--ink)}
+  .meta .req{color:var(--warn)}
+
+  .boss{border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;margin-bottom:14px}
+  .boss > h4{margin:0;padding:12px 15px;background:var(--panel2);border-bottom:1px solid var(--line);
+    display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .boss .name{font-size:16px;font-weight:700}
+  .boss .tag{font-family:var(--mono);font-size:11px;color:var(--cyan);letter-spacing:.06em}
+  .boss .body{padding:14px 15px}
+  .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:12px 0 5px}
+  .lbl:first-child{margin-top:0}
+  .boss p{margin:0 0 8px;font-size:13.5px}
+  .boss p:last-child{margin-bottom:0}
+  .bounties{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+  .bounties li{font-size:12.5px;color:var(--dim);padding-left:18px;position:relative}
+  .bounties li::before{content:"◈";position:absolute;left:0;color:var(--amber-d)}
+  .pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .pill{font-family:var(--mono);font-size:12px;padding:4px 9px;border-radius:4px;border:1px solid var(--line2);background:var(--raise);color:var(--ink)}
+  .ext{margin-top:12px;padding:9px 11px;border-left:2px solid var(--bad);background:#1e1518;border-radius:0 4px 4px 0;font-size:12.5px;color:var(--dim)}
+  .ext b{color:var(--bad)}
+  .stub{border:1px dashed var(--line2);border-radius:8px;padding:16px;color:var(--dim);font-size:13px}
+  .stub b{color:var(--amber)}
+
+  footer{margin-top:30px;border-top:1px solid var(--line);padding-top:16px;color:var(--faint);font-size:12px}
+  a{color:var(--cyan)}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap hd">
+    <div class="brand">Mecharashi // Field Manual</div>
+    <h1>Armed Conquest <span class="s">/</span> Boss Guide</h1>
+    <p class="sub">Every boss distilled into a readable brief — mechanics, bounties, and how to beat them — so you don't have to scrub through videos. Strategies paraphrased and condensed from community written guides (credited below). CN patch data; adapt to your own roster.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="panel">
+    <h2>How the mode works</h2>
+    <div class="body">
+      <ul class="rules">
+        <li><b>Locked pilots:</b> a pilot who clears a battle is locked out for the rest of the section until you've beaten every battle in it — so this mode rewards roster <i>depth</i>, not just a few strong pilots. Only pilots lock; your STs are always reusable.</li>
+        <li><b>3 bounties per battle:</b> achievement-style challenges with rewards. Once done they're permanent. You can clear them with your best pilots, then re-run with weaker ones to free the strong ones up.</li>
+        <li><b>Mercenaries:</b> hired pilots follow the same lock rule — a pilot used once (yours or hired) can't be reused elsewhere in the section until unlocked.</li>
+        <li><b>Weekly reset (Monday):</b> claim a reward for each completed battle without refighting.</li>
+        <li><b>Challenge budget:</b> once you've unlocked 4 sections, you can only run 3 sections' worth of challenges per week — pick which weapon materials you want.</li>
+        <li><b>Rewards:</b> Section 1 gives Lv70 S-class weapons; from Section 2 on, battles drop crafting materials for high-end / unique weapons (several battles per weapon).</li>
+        <li><b>Difficulty:</b> Section 1 is single-difficulty. From Section 2, Normal → Hard → Extreme unlock as you clear all 4 bosses; Extreme adds a stage-wide effect and tightens bounty requirements.</li>
+        <li><b>Unlock gates:</b> later sections sit behind Frontier Trial depth % and clearing the previous section's Hard.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Unlock requirements &amp; progression</h2>
+    <div class="body">
+      <p class="req-note">The mode itself arrived with patch 1.2.1 and sits behind campaign / Frontier Trial progression — you'll be well into the endgame before it opens. Each section then has its own gate (below), and within a section every battle you clear <b>locks the pilots used</b> until you've beaten all battles in it. Note: only <b>pilots</b> lock — your STs are always free to reuse.</p>
+
+      <div class="lbl">Section unlock gates</div>
+      <ul class="rules">
+        <li><b>1 · Trapped Beast</b> — base section, available with the mode. Single difficulty.</li>
+        <li><b>2 · Thunder Rumbles</b> — reach <b>90% depth</b> in Frontier Trial <i>To the Very End</i> and clear Clearance Ops <i>Storm From the Sea</i> in one run (that CO itself needs 50% depth in <i>To the Very End</i> first). Roughly 3–4 weeks of play for the 90%.</li>
+        <li><b>3 · Cross The Line</b> — reach <b>80% depth</b> in Frontier Trial <i>Escape Impossible</i>.</li>
+        <li><b>4 · Restless Soul</b> — reach <b>80% depth</b> in Frontier Trial <i>Neglect</i> AND clear all <b>Hard</b> stages of Cross The Line.</li>
+        <li><b>5 · Empty Promise</b> — clear all <b>Hard</b> stages of Restless Soul (plus a release-date gate; shipped with the Evangelion collab).</li>
+        <li><b>6 · Longest Night</b> — reach <b>90% depth</b> in Frontier Trial <i>Dawn Hour</i> AND clear all <b>Hard</b> stages of Empty Promise. Inferno unlocks after all Extreme.</li>
+        <li><b>7–8 · Lost in the Desert / Wildfire</b> — later sections following the same pattern (Frontier Trial depth + previous section's Hard clears); exact gates not confirmed here.</li>
+      </ul>
+
+      <div class="lbl">Difficulty structure</div>
+      <ul class="rules">
+        <li>Section 1 is <b>single difficulty</b>.</li>
+        <li>From Section 2, <b>Normal → Hard → Extreme</b> each unlock after you beat all 4 bosses on the tier below.</li>
+        <li><b>Extreme</b> adds a stage-wide effect and tightens the bounty requirements. <b>Longest Night</b> onward adds an <b>Inferno</b> tier after all Extreme is cleared.</li>
+      </ul>
+
+      <div class="lbl">Rewards by section</div>
+      <ul class="rules">
+        <li>Section 1 drops complete <b>Lv70 S-class weapons</b>.</li>
+        <li>Section 2 onward drops <b>crafting materials</b> for S+ / SS / unique weapons — several battles' worth per weapon.</li>
+        <li>Some sections drop <b>SS backpack blueprint materials</b> (e.g. Longest Night, Lost in the Desert).</li>
+        <li>Each Monday you can claim a reward for every completed battle without refighting. Once 4 sections are unlocked, you're capped at <b>3 sections' worth of challenge chances per week</b> — pick your materials.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Universal tactics — how to beat most stages</h2>
+    <div class="body">
+      <ul class="rules">
+        <li><b>Bounty rotation (the efficiency trick):</b> clear a battle's 3 bounties with your <i>best</i> team, then replay it with A-ranks / alternates. The replay locks the weaker pilots and frees your S-tiers again — so save your bombers for the hardest battle in the section.</li>
+        <li><b>Kill the body, not the boss:</b> most bosses have enormous body HP and self-repair. Break the limbs first, then focus everything on the body the moment it's exposed.</li>
+        <li><b>Break arms to disable, legs to pin:</b> destroying an arm usually shuts off a boss's skills or halves its output; destroying legs stops movement and flanking on adds.</li>
+        <li><b>Guts bait:</b> an "immortal" Guardian/Guts pilot (Catherine, Ana) eats the AoE and one-shots and controls where the boss moves and who it targets. Keep it fed AP with a mechanic.</li>
+        <li><b>Seven + Pochy:</b> Pochy acts as a pseudo 5th unit, a bait for missiles/rockets, and (with her shield unlocked) area repair — invaluable on 4-slot maps.</li>
+        <li><b>Status = speed:</b> the 6-turn "Quick Resolution" bounty usually needs a status applier — shock (Winston, Cicero) or burning ground (Eileen, Lucia, Erisa) to stack extra damage per turn.</li>
+        <li><b>Bring the right mechanic:</b> debuff bosses need cleanse (Blazer ST, Melissa); AP-starve fights need Gareth/Lorna to refill your bait or re-attack your carry.</li>
+        <li><b>Snipers do double duty:</b> extended-range snipers (Natalia, Kelly, Shawnee) hit the body from outside counter range and pick off flanking adds that would otherwise wreck your formation.</li>
+        <li><b>Manage adds, don't chase them:</b> destroy grunt weapons or legs rather than killing — many respawn, some explode, and several bounties cap how many you may defeat.</li>
+        <li><b>Spread vs AoE:</b> never stack units against rocket/AoE bosses — spacing both survives the hit and clears the "hit fewer than N units" bounties.</li>
+        <li><b>Read the Extreme effect first:</b> each Extreme adds a stage-wide rule that usually breaks one of your normal tactics (no keep-away, forced pairing, stealth adds…). Plan around it before you deploy.</li>
+      </ul>
+    </div>
+  </section>
+
+  <nav class="nav" id="nav"></nav>
+  <div id="content"></div>
+
+  <footer>
+    Strategies paraphrased and condensed from community written guides — primarily <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3577827740" target="_blank" rel="noopener">CarlosPenaJr's "Armed Conquest Battles" Steam guide</a> and <a href="https://www.treyexgaming.com/mecharashi-armed-conquest-guide/" target="_blank" rel="noopener">treyexgaming's Armed Conquest guide</a>. Video demonstrations of these strategies come from the <a href="https://www.youtube.com/results?search_query=michuzak+mecharashi+armed+conquest" target="_blank" rel="noopener">MICHUZAK YouTube channel</a> (the author of the loadout sheet). Not affiliated with the developer; mechanics reflect the CN build and shift with patches. Verify against the live game.
+  </footer>
+</div>
+
+<script>
+const SECTIONS = [
+ {n:"Trapped Beast", reward:"Lv70 S-class weapons", req:"Base section — available when you unlock the mode. Single difficulty only.",
+  bosses:[
+   {name:"Castilla", tag:"Avenging Guardian",
+    bounties:["Win within 6 turns","Castilla's rocket hits fewer than 3 units","All team members survive"],
+    quickref:"Battlefield: narrow chokepoint. Main threat: area-denial rockets + a hit-kill MG burst. Adds: 2 snipers, 1 hook fighter, 1 raider, 1 railgun. Bring: snipers, shock appliers, a Guts shield tank.",
+    threat:"Narrow map with rocket AoE. He rockets whenever his AP is below 6 and aims to hit the most targets — so spread out (that also handles the Rocket Evasion bounty). At 6 AP he uses Massive Gunfire, a near one-shot. Below 50% HP he fully restores every part except the body and gains AP.",
+    strat:"Keep units spaced. Hold a Guardian with Guts on the bench to eat the 6-AP Massive Gunfire (Ana is ideal — she can trigger Guts twice). Once he heals at 50%, attack ONLY the body (a sniper, or a body-targeting fighter like Gumusiay). MG/SG support damage is nullified, so Raiders can't chip him. Bring Winston (shock) or Eileen (shock + fire) to hit the 6-turn clear.",
+    pilots:["Ana (Guardian/Guts)","Sniper","Gumusiay","Winston / Eileen"] },
+   {name:"Mann", tag:"Drink Till Doomsday",
+    bounties:["Win within 6 turns","Mann never triggers Re-ATK","All team members survive"],
+    quickref:"Battlefield: open space. Main threat: AP denial, a 10k AoE, and a counterattack loop. Adds: snipers, missile users, hook fighters, stealth raiders. Bring: a Guts bait tank, long-range snipers, a support mechanic.",
+    threat:"Open map; he moves 4 tiles and has a 10k-damage 5×5 AoE around himself. If he finishes a basic attack adjacent (within 2 tiles) to your unit he triggers Re-ATK — which fails the bounty and lets him lock you out with Attack Ban.",
+    strat:"Run an 'immortal bait': a Guts pilot (the free S fighter Catherine works) placed diagonally to him each turn so he moves away and uses Attack Ban instead of Re-ATK. Keep her at 4+ AP with a mechanic (Gareth — Renovate / Full Maintenance). Deal damage from range: William/Emily long-range, Naomi missiles, a body sniper, shock. Kill both snipers so the bait doesn't chase them.",
+    pilots:["Catherine (Guts bait)","Gareth","William / Emily","Naomi","Sniper"] },
+   {name:"Crotti", tag:"Attack of the Dead",
+    bounties:["All team members survive"],
+    quickref:"Battlefield: encirclement with creeping adds. Main threat: debuff stacking + AoE spam (~40k body HP, self-repairs). Adds: high-hit MG link-attackers, stealth units. Bring: a debuff-cleanse mechanic, AoE nukers, a weapon-breaker.",
+    threat:"40k+ body HP with periodic self-repair (first around 50%). Her talent: your attacks that land 7+ hits inflict a random debuff on you; once you carry 2 debuffs, her attacks destroy one of your parts. Mounted MGs have 4-tile range and link-attack to stack hits/debuffs fast.",
+    strat:"Bring a mechanic that clears debuffs — the Blazer ST's kit removes one, which is huge here. Destroy both mounted MGs by turn 2. Don't stack units directly below them at the start. Then it's a firepower race: Eileen combo, one or two raiders (Rosa/Marcus/Frida/William), Melissa, and Sylvie to destroy grunt weapons before they debuff you.",
+    pilots:["Blazer ST (debuff clear)","Eileen","Raider ×1-2","Melissa","Sylvie"] }
+  ]},
+ {n:"Thunder Rumbles", reward:"Weapon-crafting materials", req:"Gate: 90% depth in Frontier Trial <To the Very End> + clear Clearance Ops <Storm From the Sea> in one run (that CO needs 50% depth first). Adds Normal/Hard/Extreme.",
+  bosses:[
+   {name:"Blazerudge", tag:"Spark",
+    bounties:["Win within 6 turns","Don't kill more than 4 / 3 / 2 mercs (N/H/E)","All survive"],
+    threat:"Only 4 deploy slots. He heals from damage dealt while allies carry Kindle; at 50% body he detonates for damage scaling with Kindle stacks. Grunts respawn and gain Kindle in a fixed corner order each turn.",
+    strat:"Attack from range and lock him in place. Seven counts Pochy as a 5th body. Add a body-fighter (Gumusiay) and two snipers (Natalia on body, Dana/Sylvie flexing between grunts and body). He alternates Flame Ban (odd turns, makes you miss vs Kindle targets) and a Rail Gun AoE (even). Clear Kindle grunts before his body hits 50%.",
+    pilots:["Seven (+Pochy)","Gumusiay","Natalia","Dana / Sylvie"],
+    ext:"Every ally you kill gives the enemy +30% DMG (stacks to 7). Lean hard on Seven + Pochy to sustain." },
+   {name:"Roarlash", tag:"Incessant Whizzing — hardest in section",
+    bounties:["Win within 6 turns","[Know the Way] never stacks above 3 / 2","All survive"],
+    threat:"His Counter-Field hits everyone for good damage each time you attack him (up to 3 stacks); if you don't dispel it every turn, your units drop to 2 AP. His Guardian (Thunderbolt Elite) shields him and buffs him each turn it lives, and respawns when killed.",
+    strat:"Open with a shield attack (Rebecca — recovers AP) then link attacks (William with Rack, staying out of range) to strip all 3 Counter-Field stacks in one go. Kill the Guardian by turn 3 (and keep re-killing it). Burn the ground behind him with Lucia or Eileen so his Guardian walks into it.",
+    pilots:["Rebecca (shield opener)","William (Rack)","Lorna","Lucia / Eileen"],
+    ext:"Enemies take -50% damage if no unit is adjacent — you can't play keep-away, so you'll eat the Counter-Field. Kill the Guardian on turn 2 and every 2 turns." },
+   {name:"Mirestomp", tag:"Question & Answer",
+    bounties:["Win within 7 / 6 turns","Destroy / activate a Support ST (varies by difficulty)","All survive"],
+    threat:"Two Support STs on the flanks; stealthed Caller Drones spawn most turns trying to activate them — an active Support ST massively buffs her. She alternates a skill-disable attack (odd turns) and a 4-tile AoE (even).",
+    strat:"Destroy the drones the turn they appear (Hong/Kelly one side, Marcus the other). Pin Mirestomp in place with Erisa's burning ground + Grant. On her skill-disable turns, feed her Erisa and repair the debuff off next turn. The blind spots behind the walls are safe from her AoE — park your mechanic there. Destroy an arm to shut off her skills.",
+    pilots:["Hong / Kelly","Marcus","Erisa","Grant"],
+    ext:"Moving before you attack loses up to -40% DMG. Reposition minimally; use Rosa's Rail Gun to reveal drones." },
+   {name:"Grimbite", tag:"Invincible",
+    bounties:["All survive"],
+    threat:"Pilots Hades — immune to burning ground, so Eileen's value drops. Gains crit/hit/damage as her HP falls.",
+    strat:"Unlike the rocket bosses, get CLOSE and burst. Split the team: top handles the 5 upper grunts (Eileen earns her slot here), bottom pushes in. Destroy the limbs, then focus the body once it's exposed (~turn 4-5) with Frida + Rosa.",
+    pilots:["Eileen","Rosa","Sylvie (jetpack)","Melissa","Frida"],
+    ext:"AoE attacks get stronger per extra target hit (+25%, up to +125%) — for both sides. Use it to your advantage." }
+  ]},
+ {n:"Cross The Line", reward:"Weapon materials", req:"Gate: 80% depth in Frontier Trial <Escape Impossible>. Normal/Hard/Extreme.",
+  bosses:[
+   {name:"Garcia", tag:"Loyal Dog",
+    bounties:["Win within 6 turns","Fewer than 3 / 2 units hit by [Crash]","All survive"],
+    threat:"Narrow map seeded with landmines that only hurt YOU. He pilots Pascal, spams an AoE Blaster (Crash on a blocked push), gains AP on retaliation, and can walk through your units.",
+    strat:"Never direct-attack within 3 tiles of him. Bait with a Guts unit + a mechanic to clear Crash; deal damage with Tactical weapons. Seven's Pochy isn't priority-targeted and doesn't count as a unit while Crashed. Watch your footing around the mines.",
+    pilots:["Guts bait","Seven / Grant","Naomi","Cicero (shock)","Lucia"],
+    ext:"His hits stack Cost Surge (+1 AP cost). Keep Garcia standing in Lucia's burning field." },
+   {name:"Bertha", tag:"The Luckiest",
+    bounties:["Win within 6 turns","Bertha triggers Re-ATK fewer than 3 / 2 times","All survive"],
+    threat:"One-shots a light/medium arm, which triggers Re-ATK and snowballs. Targets your weakest unit. Pilots Glasya + jetpack (can't be pinned) and her minimum range is -1, so even adjacent units get countered.",
+    strat:"Block her opening strike with a Guardian (Ana). Destroy both her arms as fast as possible — every hit raises her hit rate otherwise. Handle the melee waves by destroying legs (Large-Shield Guard doesn't stop melee).",
+    pilots:["Ana (Guardian)","William / Natalia (extend range)","Gareth","Kelly"],
+    ext:"Enemies stealth if nothing is adjacent — keep a unit beside Bertha (not diagonal) at end of turn." },
+   {name:"Deborah", tag:"Departure",
+    bounties:["Win within 6 turns","Fewer than 10 / 8 enemies defeated","All survive"],
+    threat:"70k+ body. Her Suppression Spray applies -50% DMG dealt; her Link Storm can wipe your team if she has both arms.",
+    strat:"Killing her minions grants the killer a huge move-based damage buff (more DMG per tile moved, active only during Re-ATK) — use light units, ideally with Accelerator. A fully-upgraded Kaidan (his last skill hits the weakest part) can land 15k+ hits to break an arm fast. Avoid letting her -50% debuff land on Kaidan turn 1; never let grunts hit you while she has both arms.",
+    pilots:["Kaidan (upgraded)","Norla (re-turn)","Dana","Camilla"],
+    ext:"Destroyed enemies explode (fixed dmg + Grievance +25% dmg taken). Use Hong to focus the body; only break one arm." },
+   {name:"Genovese Luno", tag:"End of the Old Days",
+    bounties:["Defeat Genovese Luno"],
+    threat:"Pilots Tonatiuh with his daughter Vincenza backing him. Bloodline Barrier: 15 stacks, +50% armor each, one removed per 5 hits, refreshed +15 on his main cannon. Vincenza jumps in from ~7 tiles turn 1.",
+    strat:"Strip Bloodline Barrier with Raider link attacks — Frida is essential, add Rosa/Erisa/William/Emily/Marcus. Keep your distance from Vincenza early and lure the grunts away so he can't link-attack (Eileen). Then it's a standard Titan fight — break the body when it's exposed.",
+    pilots:["Frida","Rosa / Erisa","Eileen","Melissa"],
+    ext:"Enemies gain stacking -15% dmg-taken when an ally is hit. Avoid AoE; surround him in adjacent (not diagonal) tiles to deny his rocket + one attack." }
+  ]},
+ {n:"Restless Soul", reward:"Weapon materials", req:"Gate: 80% depth in Frontier Trial <Neglect> + clear all HARD stages of Cross The Line.",
+  bosses:[
+   {name:"Morgana", tag:"Hunter or Prey",
+    bounties:["Win within 6 turns","Make Morgana gain [Power Shortage] twice","All survive"],
+    threat:"Uses an Alter-Blade dash that jumps across the field hitting everyone in the path, and repairs all parts at the start of her turn. She stacks Energy Replenishment from her Marching Crabs.",
+    strat:"Destroy the crabs (Marcus with a no-retaliation flurry, Kaidan one-shots) to starve her — with no crabs she falls into Power Shortage (very vulnerable) after her 2nd turn. Don't kill her before the 2nd Power Shortage if you want that bounty. Never stand in her polearm range.",
+    pilots:["Marcus","Kaidan","Winston (shock)","GKD gang"],
+    ext:"Destroyed crabs explode (50% max-HP fixed dmg, 1 ring) — don't melee them. ~80k HP, so bring strong hitters." },
+   {name:"Liliya", tag:"Venomous — hardest in section",
+    bounties:["Win within 6 turns","Destroy 4 / 3 or fewer Neutralizers","All survive"],
+    threat:"Acid stacks fast, deals fixed damage, cuts your repair, and spreads through attacks. Only 5 Neutralizers on the map remove it — and you can only destroy 4 (or 3).",
+    strat:"Pin and surround her (Hong opener), hit the body (Gumusiay + snipers), and lay Erisa's burning ground. Attack with the unit that already has Acid so you don't spread it. Use Seven + Pochy to bait her missiles. She charges an AoE end of turn 1 with a 2-turn cooldown — respect it.",
+    pilots:["Hong","Gumusiay","Erisa","Seven (+Pochy)"],
+    ext:"Acid range widens and Acid Storm gets +1 range; Neutralizers only strip Acid (no heal). Go brute-force — Emily's link-all skill + Erisa." },
+   {name:"Libby", tag:"Watchdog",
+    bounties:["Win within 6 turns","Destroy fewer than 5 / 4 / 3 Signal Transmitters","All survive"],
+    threat:"Powers up while allies are alive; her Rail Gun leaves everyone in its path on 2 AP. 6 transmitters spawn adds; you only need to kill 3 (the one beside her + two behind the opening grunts).",
+    strat:"Kill the opening grunts and the transmitter beside her on turn 1. Lure her up ~2 tiles so she can't line up the Rail Gun, then trap her (a unit below + one in front). At any part below 50% she becomes untargetable by single attacks — switch to AoE. Kelly clears transmitters; Eileen/Lucia burn + Cicero shock.",
+    pilots:["Kelly","Eileen / Lucia","Cicero","AoE units"],
+    ext:"Every enemy deploys with a 1-time DMG Immunity, and transmitters have 20k+ HP — expect a slower pin." },
+   {name:"Alena", tag:"Missive from Wintry Ovett — easiest here",
+    bounties:["All survive"],
+    threat:"Gains a yellow protection bar each enemy turn and prioritises units that can't retaliate. Comes in a plain ST with two flamethrowers, no problem backpack.",
+    strat:"Bring Raiders (Frida) to burn through the shield. Use her 'attack the non-retaliator' behaviour to lure her up, then surround and burst. Sylvie breaks arms; Camilla finishes. On Normal you can end it by turn 3.",
+    pilots:["Frida","Sylvie","Camilla","Cicero / Lucia (optional)"],
+    ext:"Her attacks apply Maneuver Destruction; ~80k HP + ~15k shield/turn, and Cold Seal → Burning II can destroy parts. Brute force won't cut it — play around her targeting." }
+  ]},
+ {n:"Empty Promise", reward:"Weapon materials", req:"Gate: clear all HARD stages of Restless Soul (+ a release-date gate). Shipped with the Evangelion collab.",
+  bosses:[
+   {name:"Hayato", tag:"Shut Out — 'Mann 2.0'",
+    bounties:["Win within 6 turns","Take Blazing Terrain damage no more than 2 / 1 / 0 times","All survive"],
+    threat:"A telegraphed 10k fixed-damage bombardment on odd turns (alternating N/S then W/E — there are safe spots). Stacking Preheat reaches Limit Break at 5 stacks (+100% DMG/Hit) by turn 5.",
+    strat:"Run a mobile team (avoid rooting units like Natalia/William). Marcus with dual Aria's Fate can double-attack without retaliation. Break both arms before turn 5. Support with Winston shock, Naomi, Emily/Shinji, and Seven or Gareth as mechanic.",
+    pilots:["Marcus (Aria's Fate)","Winston","Naomi","Seven / Gareth"],
+    ext:"Isolated units take +50% / deal -50% — keep pairs side-by-side (not diagonal). Bounty allows zero terrain damage, so always keep 2+ move available; Erisa's own burn helps on his static turns." },
+   {name:"Sunny", tag:"Black Humor",
+    bounties:["Win within 6 turns","Reserve Supply stacks no higher than 2 / 1","All survive"],
+    threat:"Both arms are indestructible — hit the body only. His Pochy army swarms each turn; every Pochy grants him Reserve Supply, which disarms your attackers. Never attack him with something that lets him retaliate while he has that buff.",
+    strat:"Surround him on turn 1 (he starts boxed between cargo). Line up 2 Pochies and double-Rail-Gun them (they have Guts, so one shot to break, one to kill). Body damage from Natalia, Shawnee, Gumusiay. On Hard/Extreme, Fia + Shawnee must one-shot Pochies with Rail Gun in tight wave management.",
+    pilots:["Natalia","Shawnee","Fia","Gumusiay"],
+    ext:"Enemies stealth on deploy/action; ~90k HP. Shinji in Sniper Mode with a body-aim rifle helps; you MUST win by turn 6 (turn-6 Pochy placement becomes unkillable)." },
+   {name:"Keller", tag:"Choice",
+    bounties:["Win within 6 turns","Destroy one of Keller's parts within 5 / 4 / 3 turns","All survive"],
+    threat:"A raging bull: the closer your units are, the LESS damage they deal (down to -100%). When attacked he pursues 2 tiles and slams the body, favouring units that can't retaliate. He can pass through your units.",
+    strat:"Fight at range and lure. Block his pursuit path with a unit or terrain. Break the arms. Snipers do the work — Sylvie on grunts, Kelly on Keller (jetpacks help). William/Emily for burst, Cicero shock to pull him off your team, Lorna to re-attack.",
+    pilots:["Kelly","Sylvie","William / Emily","Lorna"],
+    ext:"Burst Rush / Pursuit gain +1 tile — attack from 4+ tiles and body-block snipers. Seven's Pochy can interrupt his movement." },
+   {name:"Sámi", tag:"Nothing Remains",
+    bounties:["All survive"],
+    threat:"Doesn't attack directly — uses two indestructible Gunports (a Rocket and an MG) and teleports between them when hit (once/turn), forcing you to split. The Rocket Gunport reacts to the [Tracking] debuff; the MG Gunport link-retaliates for every add.",
+    strat:"Split the team across both Gunports. If Sámi starts a turn on the MG, hit him first to move him off it; if he's on the Rocket, only send him to the MG on your final attack. Kill the tanks/helicopters (they spawn every 2 turns). Frida on the rocket side, Rosa on the MG side, a shuttle unit (Eileen/Cicero/Naomi), Asuka with an accelerator.",
+    pilots:["Frida","Rosa","Eileen / Naomi","Asuka (accelerator)"],
+    ext:"A destroyed vehicle deploys a 'Struct'. Manage adds so link-retaliation doesn't snowball." }
+  ]},
+ {n:"Longest Night", reward:"SS backpack blueprint materials", req:"Gate: 90% depth in Frontier Trial <Dawn Hour> + clear all HARD stages of Empty Promise. Inferno after all Extreme. Per-boss strategies not yet captured here.",
+  stub:"Bosses: Skysweep · Vera · Aiden · Victoria. This section drops blueprint materials but I haven't transcribed per-boss strategies yet — check the linked Steam guide for the current write-up." },
+ {n:"Lost in the Desert", reward:"Weapon + SS backpack materials", req:"Later section — gate follows the pattern (Frontier Trial depth + prior Hard clears); exact numbers not confirmed. Per-boss strategies not yet captured here.",
+  stub:"Bosses: Meritus · Egbert · Eller · Ridgewald. From Michuzak's clear videos: the final boss Ridgewald carries the important gimmicks, while the other three (Meritus, Egbert, Eller) can be 'cheesed' with the right teams. Hard Ridgewald falls to a light A-rank team — A0 William + A0 Rei + A1 Rosa; Extreme Ridgewald wants a 4-Raider team (3 A-ranks), and Meritus needs a changed approach on Extreme. Full per-boss detail still pending (video-only source)." },
+ {n:"Wildfire", reward:"Weapon materials", req:"Later section — gate not confirmed here. Per-boss strategies not yet captured here.",
+  stub:"Bosses: Douglas · Georgia · Rena · Gutzman. Per-boss strategies pending — see the linked Steam guide." }
+];
+
+const nav=document.getElementById('nav'), content=document.getElementById('content');
+function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+
+function renderSection(i){
+  [...nav.children].forEach((b,bi)=>b.classList.toggle('active',bi===i));
+  const s=SECTIONS[i];
+  let html=`<div class="sechead"><span class="idx">Section ${i+1}</span><h3>${esc(s.n)}</h3></div>
+    <div class="meta"><b>Reward:</b> ${esc(s.reward)} &nbsp;·&nbsp; <span class="req">${esc(s.req)}</span></div>`;
+  if(s.stub){ html+=`<div class="stub">${esc(s.stub)}</div>`; content.innerHTML=html; return; }
+  s.bosses.forEach(b=>{
+    html+=`<div class="boss">
+      <h4><span class="name">${esc(b.name)}</span><span class="tag">${esc(b.tag)}</span></h4>
+      <div class="body">
+        <div class="lbl">Bounties</div>
+        <ul class="bounties">${b.bounties.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+        ${b.quickref?`<div class="lbl">Quick reference</div><p class="muted" style="font-size:12.5px;color:var(--dim)">${esc(b.quickref)}</p>`:""}
+        <div class="lbl">The threat</div><p>${esc(b.threat)}</p>
+        <div class="lbl">How to beat it</div><p>${esc(b.strat)}</p>
+        <div class="lbl">Recommended</div>
+        <div class="pills">${b.pilots.map(p=>`<span class="pill">${esc(p)}</span>`).join("")}</div>
+        ${b.ext?`<div class="ext"><b>Extreme:</b> ${esc(b.ext)}</div>`:""}
+      </div></div>`;
+  });
+  content.innerHTML=html;
+}
+SECTIONS.forEach((s,i)=>{
+  const btn=document.createElement('button');
+  btn.textContent=`${i+1}. ${s.n}`;
+  btn.onclick=()=>renderSection(i);
+  nav.appendChild(btn);
+});
+renderSection(0);
+</script>
+</body>
+</html>
